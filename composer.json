@@ -1,0 +1,8 @@
+{
+    "require-dev": {
+        "phpunit/phpunit": "^9.6"
+    },
+    "require": {
+        "peppeocchi/php-cron-scheduler": "^4.0"
+    }
+}

@@ -1,0 +1,2 @@
+* * * * * curl http://localhost/backup.php >> /var/www/html/backups/backup.log
+#
