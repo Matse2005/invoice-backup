@@ -6,7 +6,7 @@ use GO\Scheduler;
 $scheduler = new Scheduler();
 
 // Backup
-$scheduler->php("backup.php")->everyMinute();
+$scheduler->php("backup.php")->daily();
 
 // Run the scheduler
 $scheduler->run();
