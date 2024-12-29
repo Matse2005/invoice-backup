@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Backup Manager</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+  <script>
+    async function loadBackups() {
+      try {
+        const response = await fetch('/backups');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const files = await response.json();
+        const list = document.getElementById('backup-list');
+        list.innerHTML = '';
+
+        files.forEach(file => {
+          // Extract the date part from the filename
+          const datePart = file.replace('.json', '');
+
+          // Parse the date string using moment
+          const momentDate = moment(datePart, 'DD-MM-YYYY-HH:mm');
+
+          if (momentDate.isValid()) {
+            const item = document.createElement('li');
+            item.textContent = `${file} - ${momentDate.format('MMM DD, YYYY HH:mm')}`;
+            list.appendChild(item);
+          } else {
+            console.warn(`Invalid date format in filename: ${file}`);
+          }
+        });
+      } catch (error) {
+        console.error('Error loading backups:', error);
+        alert('Failed to load backups. Please try again later.');
+      }
+    }
+    async function forceBackup() {
+      const response = await fetch('/force-backup', {
+        method: 'POST'
+      });
+      alert('Test')
+      const data = await response.json();
+      alert(data.message);
+      // Reload the backup list after forcing a backup
+      loadBackups();
+    }
+
+    window.onload = loadBackups;
+  </script>
+</head>
+
+<body class="bg-slate-50 min-h-screen">
+  <div class="min-h-screen">
+    <nav class="bg-white shadow-sm">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+          <div class="flex items-center">
+            <svg class="h-8 w-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            </svg>
+            <h1 class="ml-2 text-2xl font-bold text-gray-900">Backup Manager</h1>
+          </div>
+          <div class="flex items-center">
+            <button onclick="forceBackup()"
+              class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+              Force Backup
+            </button>
+          </div>
+        </div>
+      </div>
+    </nav>
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-full">
+          <div class="bg-white shadow rounded-lg overflow-hidden">
+            <div class="p-4 border-b border-gray-200">
+              <h2 class="text-lg font-medium text-gray-900">Backup Files</h2>
+            </div>
+            <ul id="backup-list" class="divide-y divide-gray-200 max-h-[600px] overflow-y-auto"></ul>
+          </div>
+        </div>
+        <div id="preview" class="lg:col-span-2"></div>
+      </div>
+    </main>
+  </div>
+</body>
+
+</html>

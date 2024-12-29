@@ -1,2 +1,1 @@
-* * * * * curl http://localhost/backup.php >> /var/www/html/backups/backup.log
-#
+* * * * * cd /app && python backup.py >> /app/backups/backup.log 2>&1
