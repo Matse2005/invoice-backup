@@ -1,18 +1,44 @@
-from flask import Flask, send_from_directory, jsonify
+from flask import Flask, send_from_directory, jsonify, request, abort, session, redirect, url_for
 import os
 import subprocess
+from flask_session import Session
 
 app = Flask(__name__)
+# Set a secret key for session management
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'supersecretkey')
+app.config['SESSION_TYPE'] = 'filesystem'  # Store sessions in the file system
+Session(app)
+
 BACKUP_DIR = './backups'
+ACCESS_KEY = os.getenv('ACCESS_KEY', 'supersecretaccesskey')
+
+
+def check_access_key():
+    if 'access_key' not in session or session['access_key'] != ACCESS_KEY:
+        abort(403, description="Forbidden: Incorrect Access Key")
 
 
 @app.route('/')
 def index():
-    return send_from_directory('.', 'index.html')
+    if 'access_key' in session and session['access_key'] == ACCESS_KEY:
+        return send_from_directory('.', 'index.html')
+    return send_from_directory('.', 'login.html')
+
+
+@app.route('/login', methods=['POST'])
+def login():
+    access_key = request.form.get('access_key')
+
+    if access_key == ACCESS_KEY:
+        session['access_key'] = access_key
+        return redirect(url_for('index'))
+    else:
+        return 'Forbidden: Incorrect Access Key', 403
 
 
 @app.route('/backups')
 def list_backups():
+    check_access_key()
     try:
         # Ensure the backup directory exists
         if not os.path.exists(BACKUP_DIR):
@@ -36,22 +62,21 @@ def list_backups():
 
 @app.route('/backup/<filename>')
 def get_backup(filename):
+    check_access_key()
     return send_from_directory(BACKUP_DIR, filename)
 
 
 @app.route('/force-backup', methods=['POST'])
 def force_backup():
+    check_access_key()
     try:
-        print('Here 1')
         # Path to backup script
         backup_script = './backup.py'
 
-        print('Here 2')
         # Run the backup script
         result = subprocess.run(
             ['python', backup_script], check=True, capture_output=True, text=True)
 
-        print('Here 3')
         return jsonify({'message': 'Backup completed successfully!', 'output': result.stdout})
     except subprocess.CalledProcessError as e:
         return jsonify({'message': 'Backup failed', 'error': e.stderr}), 500
