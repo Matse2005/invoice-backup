@@ -7,94 +7,10 @@
   <title>Backup Manager</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/styles/github.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/highlight.min.js"></script>
   <script>
     hljs.highlightAll();
-  </script>
-  <script>
-    let selectedItem = null;
-
-    async function loadBackups() {
-      try {
-        const response = await fetch('/backups');
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const files = await response.json();
-        const list = document.getElementById('backup-list');
-        list.innerHTML = '';
-
-        files.forEach(file => {
-          // Extract the date part from the filename
-          const datePart = file.replace('.json', '');
-
-          // Parse the date string using moment
-          const momentDate = moment(datePart, 'DD-MM-YYYY-HH:mm');
-
-          if (momentDate.isValid()) {
-            const item = document.createElement('li');
-            item.textContent = `${file} - ${momentDate.format('MMM DD, YYYY HH:mm')}`;
-            item.classList.add('cursor-pointer', 'hover:bg-gray-100', 'p-2', 'transition', 'duration-300', 'ease-in-out');
-            item.addEventListener('click', () => {
-              if (selectedItem) {
-                selectedItem.classList.remove('bg-blue-100');
-                selectedItem.classList.remove('text-blue-700');
-              }
-              item.classList.add('bg-blue-100');
-              item.classList.add('text-blue-700');
-              selectedItem = item;
-              showPreview(file);
-            });
-            list.appendChild(item);
-          } else {
-            console.warn(`Invalid date format in filename: ${file}`);
-          }
-        });
-        toastr.success('Backup files loaded successfully');
-      } catch (error) {
-        console.error('Error loading backups:', error);
-        toastr.error('Failed to load backups. Please try again later.');
-      }
-    }
-
-    async function showPreview(filename) {
-      try {
-        const response = await fetch(`/backup/${filename.replace(':', '-')}`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        const preview = document.getElementById('preview');
-        preview.innerHTML = '<pre><code class="json">' + JSON.stringify(data, null, 2) + '</code></pre>';
-        hljs.highlightBlock(preview.querySelector('code'));
-        toastr.success('Backup preview loaded successfully');
-      } catch (error) {
-        console.error('Error loading backup preview:', error);
-        toastr.error('Failed to load backup preview. Please try again later.');
-      }
-    }
-
-    async function forceBackup() {
-      try {
-        const response = await fetch('/force-backup', {
-          method: 'POST'
-        });
-        const data = await response.json();
-        toastr.success(data.message);
-        // Reload the backup list after forcing a backup
-        loadBackups();
-      } catch (error) {
-        console.error('Error forcing backup:', error);
-        toastr.error('Failed to force backup. Please try again later.');
-      }
-    }
-
-    window.onload = loadBackups;
   </script>
 </head>
 
@@ -134,6 +50,85 @@
       </div>
     </main>
   </div>
+
+  <script>
+    let selectedItem = null;
+
+    async function loadBackups() {
+      try {
+        const response = await fetch('/backups');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const files = await response.json();
+        const list = document.getElementById('backup-list');
+        list.innerHTML = '';
+
+        files.forEach(file => {
+          const datePart = file.replace('.json', '');
+          const momentDate = moment(datePart, 'DD-MM-YYYY-HH:mm');
+
+          if (momentDate.isValid()) {
+            const item = document.createElement('li');
+            item.textContent = `${file} - ${momentDate.format('MMM DD, YYYY HH:mm')}`;
+            item.classList.add('cursor-pointer', 'hover:bg-gray-100', 'p-2', 'transition', 'duration-300', 'ease-in-out');
+            item.addEventListener('click', () => {
+              if (selectedItem) {
+                selectedItem.classList.remove('bg-blue-100');
+                selectedItem.classList.remove('text-blue-700');
+              }
+              item.classList.add('bg-blue-100');
+              item.classList.add('text-blue-700');
+              selectedItem = item;
+              showPreview(file);
+            });
+            list.appendChild(item);
+          } else {
+            console.warn(`Invalid date format in filename: ${file}`);
+          }
+        });
+      } catch (error) {
+        console.error('Error loading backups:', error);
+        alert('Failed to load backups. Please try again later.');
+      }
+    }
+
+    async function showPreview(filename) {
+      const preview = document.getElementById('preview');
+      preview.innerHTML = ''; // Clear previous content
+
+      try {
+        const response = await fetch(`/backup/${filename.replace(':', '-')}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        preview.innerHTML = '<pre><code class="json">' + JSON.stringify(data, null, 2) + '</code></pre>';
+        hljs.highlightAll(preview.querySelector('code'));
+      } catch (error) {
+        console.error('Error loading backup preview:', error);
+        alert('Failed to load backup preview. Please try again later.');
+      }
+    }
+
+    async function forceBackup() {
+      try {
+        const response = await fetch('/force-backup', {
+          method: 'POST'
+        });
+        const data = await response.json();
+        alert(data.message);
+        loadBackups();
+      } catch (error) {
+        console.error('Error forcing backup:', error);
+        alert('Failed to force backup. Please try again later.');
+      }
+    }
+
+    window.onload = loadBackups;
+  </script>
 </body>
 
 </html>
