@@ -43,7 +43,6 @@
       const response = await fetch('/force-backup', {
         method: 'POST'
       });
-      alert('Test')
       const data = await response.json();
       alert(data.message);
       // Reload the backup list after forcing a backup
