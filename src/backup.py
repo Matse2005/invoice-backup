@@ -4,10 +4,8 @@ import json
 from datetime import datetime, timedelta
 
 # Configuration
-# API_URL = os.getenv('API_URL') + "/api/invoices"
-# API_KEY = os.getenv('API_KEY')
-API_URL = "https://invoice-server-main-yvc4uq.laravel.cloud/api/invoices"
-API_KEY = "GKLdm2392J38iFgGPjcOOz2iQ327"
+API_URL = os.getenv('API_URL') + "/api/invoices"
+API_KEY = os.getenv('API_KEY')
 BACKUP_DIR = './backups'
 FILE_AGE_LIMIT = 14  # days
 
